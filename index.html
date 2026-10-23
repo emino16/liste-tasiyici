@@ -148,6 +148,7 @@ const SCOPE = "user-library-read user-follow-read playlist-read-private playlist
 const HEADER = ["Track name", "Artist name", "Album", "Playlist name", "Type", "ISRC", "Spotify - id"];
 const TRACK_TYPES = ["Favorite", "Playlist"];
 const CHUNK = 100;
+const MAX_PER_LIST = 10000; // Spotify: bir çalma listesinde en fazla 10.000 öğe
 const REDIRECT = location.origin + location.pathname.replace(/index\.html$/, "");
 
 // ---- Yardımcılar -------------------------------------------------------------
@@ -432,6 +433,7 @@ async function readImportFile(file) {
     importKey = "import:" + hash(importIds.join(","));
     let html = `<b>${esc(file.name)}</b><br>CSV satırı: ${fmt(rows.length - 1)} · benzersiz şarkı: <b>${fmt(importIds.length)}</b>`;
     if (skipped) html += `<br>Atlanacak albüm/sanatçı satırı: ${fmt(skipped)}`;
+    if (importIds.length > MAX_PER_LIST) html += `<br>Spotify bir listeye en fazla ${fmt(MAX_PER_LIST)} şarkı aldığı için ${Math.ceil(importIds.length / MAX_PER_LIST)} ayrı liste oluşturulacak.`;
     const st = store.get(importKey);
     if (st && st.added < importIds.length) html += `<br>Bu dosyanın yarım kalmış yüklemesi var (${fmt(st.added)}/${fmt(importIds.length)}). Devam edebilirsin.`;
     info.innerHTML = html; info.hidden = false;
@@ -452,20 +454,30 @@ async function runImport() {
     if (!confirm("Bu dosya daha önce tamamen yüklenmiş. Yeni bir liste daha oluşturulsun mu?")) return;
     st = null;
   }
+  if (st && !st.parts) st = null; // eski biçimdeki kayıt: yeniden başla
   setBusy(true);
   try {
+    const nParts = Math.ceil(importIds.length / MAX_PER_LIST);
     if (!st) {
-      const name = $("#plName").value.trim() || "Tüm Şarkılar (Birleşik)";
-      const pl = await api("POST", "/me/playlists", {name, public: $("#plPublic").checked,
-        description: `${importIds.length} şarkı, CSV'den aktarıldı`});
-      st = {playlist_id: pl.id, added: 0, url: (pl.external_urls || {}).spotify || "", name};
-      store.set(importKey, st);
-      log(`Liste oluşturuldu: ${name}`);
-    } else log(`Devam ediliyor: ${st.added}/${importIds.length}`);
+      const base = $("#plName").value.trim() || "Tüm Şarkılar (Birleşik)";
+      st = {base, isPublic: $("#plPublic").checked, added: 0, parts: []};
+      if (nParts > 1) log(`${fmt(importIds.length)} şarkı ${nParts} listeye bölünecek (Spotify sınırı: liste başına ${fmt(MAX_PER_LIST)}).`);
+    } else log(`Devam ediliyor: ${fmt(st.added)}/${fmt(importIds.length)}`);
     progress(st.added, importIds.length);
     while (st.added < importIds.length) {
-      const batch = importIds.slice(st.added, st.added + CHUNK);
-      await api("POST", `/playlists/${st.playlist_id}/items`, {uris: batch.map(i => "spotify:track:" + i)});
+      const partIdx = Math.floor(st.added / MAX_PER_LIST);
+      if (!st.parts[partIdx]) {
+        const name = nParts > 1 ? `${st.base} (${partIdx + 1}/${nParts})` : st.base;
+        const count = Math.min(MAX_PER_LIST, importIds.length - partIdx * MAX_PER_LIST);
+        const pl = await api("POST", "/me/playlists", {name, public: st.isPublic,
+          description: `${count} şarkı, CSV'den aktarıldı`});
+        st.parts[partIdx] = {id: pl.id, name, url: (pl.external_urls || {}).spotify || ""};
+        store.set(importKey, st);
+        log(`Liste oluşturuldu: ${name}`);
+      }
+      const partEnd = (partIdx + 1) * MAX_PER_LIST;
+      const batch = importIds.slice(st.added, Math.min(st.added + CHUNK, partEnd));
+      await api("POST", `/playlists/${st.parts[partIdx].id}/items`, {uris: batch.map(i => "spotify:track:" + i)});
       st.added += batch.length; store.set(importKey, st);
       progress(st.added, importIds.length);
       log(`  ${fmt(st.added)}/${fmt(importIds.length)}`);
@@ -473,7 +485,8 @@ async function runImport() {
     }
     log("Bitti.");
     const r = $("#importResult");
-    r.innerHTML = `<b>${fmt(importIds.length)} şarkı eklendi.</b>` + (st.url ? `<br><a href="${esc(st.url)}" target="_blank" rel="noopener">Listeyi Spotify'da aç</a>` : "");
+    r.innerHTML = `<b>${fmt(importIds.length)} şarkı eklendi.</b>` + st.parts.map(p =>
+      p.url ? `<br><a href="${esc(p.url)}" target="_blank" rel="noopener">${esc(p.name)} — Spotify'da aç</a>` : `<br>${esc(p.name)}`).join("");
     r.hidden = false;
   } catch (e) {
     handleFatal(e);
