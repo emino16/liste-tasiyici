@@ -1,0 +1,529 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Liste Taşıyıcı</title>
+<meta name="theme-color" content="#121212">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231ed760'/%3E%3Cpath d='M20 22h24M20 32h24M20 42h14' stroke='%23121212' stroke-width='6' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#f6f7f5; --card:#ffffff; --text:#141414; --muted:#636863; --line:#e1e4df;
+  --accent:#1aa34a; --accent-text:#ffffff; --danger:#c0392b; --soft:#eef3ee; --log:#f0f2ef;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#101210; --card:#1a1d1a; --text:#eef0ec; --muted:#9aa19a; --line:#2c312c;
+    --accent:#1ed760; --accent-text:#0b1a0f; --danger:#ff6b5b; --soft:#1f2a21; --log:#141714;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#101210; --card:#1a1d1a; --text:#eef0ec; --muted:#9aa19a; --line:#2c312c;
+  --accent:#1ed760; --accent-text:#0b1a0f; --danger:#ff6b5b; --soft:#1f2a21; --log:#141714;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--text);font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  padding:max(16px,env(safe-area-inset-top)) 16px max(24px,env(safe-area-inset-bottom))}
+.wrap{max-width:560px;margin:0 auto}
+header{display:flex;align-items:center;gap:12px;margin:8px 0 18px}
+header .logo{width:44px;height:44px;border-radius:12px;background:var(--accent);display:grid;place-items:center;flex:none}
+header h1{font-size:22px;margin:0;letter-spacing:-.01em}
+header p{margin:0;color:var(--muted);font-size:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:14px}
+h2{font-size:17px;margin:0 0 10px}
+h3{font-size:15px;margin:0}
+p{margin:0 0 10px}
+.muted{color:var(--muted);font-size:14px}
+button,.btn{font:inherit;border-radius:12px;border:1px solid var(--line);background:var(--soft);color:var(--text);
+  padding:11px 14px;cursor:pointer;min-height:44px}
+button:disabled{opacity:.5;cursor:default}
+.primary{background:var(--accent);color:var(--accent-text);border-color:transparent;font-weight:600;width:100%}
+.link{background:none;border:none;color:var(--muted);text-decoration:underline;padding:6px;min-height:auto}
+.user{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:15px}
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:5px;margin-bottom:14px}
+.tabs button{border:none;background:none;border-radius:10px;font-weight:600;color:var(--muted)}
+.tabs button.active{background:var(--accent);color:var(--accent-text)}
+.check{display:flex;align-items:center;gap:10px;padding:8px 0;font-size:15px}
+.check input{width:20px;height:20px;accent-color:var(--accent);flex:none}
+.row{display:flex;justify-content:space-between;align-items:baseline;margin:14px 0 6px}
+.quick{display:flex;gap:6px;margin-bottom:8px}
+.quick button{flex:1;padding:7px 8px;min-height:36px;font-size:14px}
+.list{max-height:320px;overflow:auto;border:1px solid var(--line);border-radius:12px;padding:2px 10px;margin-bottom:14px}
+.list .check{border-bottom:1px solid var(--line)}
+.list .check:last-child{border-bottom:none}
+.list .name{flex:1;min-width:0;overflow-wrap:anywhere}
+.list .meta{color:var(--muted);font-size:13px;white-space:nowrap}
+.tag{display:inline-block;font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:0 5px;margin-left:4px}
+label.field{display:block;font-size:14px;color:var(--muted);margin:12px 0 4px}
+input[type=text]{width:100%;font:inherit;padding:11px 12px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--text)}
+.file{display:block;text-align:center;border:2px dashed var(--line);border-radius:14px;padding:22px 12px;cursor:pointer;font-weight:600}
+.file input{display:none}
+.info{background:var(--soft);border-radius:12px;padding:10px 12px;font-size:14px;margin-top:10px}
+.actions{display:flex;gap:8px;margin-top:10px}
+.actions button{flex:1}
+.progress{height:8px;background:var(--line);border-radius:99px;overflow:hidden;margin:4px 0 10px}
+.progress div{height:100%;width:0;background:var(--accent);transition:width .25s}
+.alert{border-color:var(--danger);color:var(--danger);font-size:14px;white-space:pre-wrap;overflow-wrap:anywhere}
+#log{background:var(--log);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font:12.5px/1.5 ui-monospace,Menlo,Consolas,monospace;
+  max-height:220px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;margin:0}
+#log:empty{display:none}
+a{color:var(--accent)}
+footer{color:var(--muted);font-size:12.5px;text-align:center;margin-top:18px}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" style="color:var(--accent-text)"><path d="M5 7h14M5 12h14M5 17h9"/></svg></div>
+    <div><h1>Liste Taşıyıcı</h1><p>Spotify kütüphaneni CSV'ye yedekle, geri yükle</p></div>
+  </header>
+
+  <div id="err" class="card alert" hidden></div>
+
+  <section id="loginView" class="card" hidden>
+    <h2>Hoş geldin</h2>
+    <p class="muted">Beğendiğin şarkıları, albümleri, sanatçıları ve çalma listelerini bir CSV dosyasına kaydedebilir, sonra bu dosyadan Spotify'da yeni bir liste oluşturabilirsin.</p>
+    <button id="loginBtn" class="primary">Spotify ile giriş yap</button>
+    <p class="muted" style="margin-top:10px">Giriş yapabilmek için hesabının bu uygulamanın kullanıcı listesine eklenmiş olması gerekir.</p>
+  </section>
+
+  <section id="appView" hidden>
+    <div class="user"><span>Merhaba, <b id="userName"></b></span><button id="logoutBtn" class="link">Çıkış</button></div>
+    <nav class="tabs">
+      <button data-tab="export" class="active">Dışa aktar</button>
+      <button data-tab="import">İçe aktar</button>
+    </nav>
+
+    <div id="tab-export" class="card">
+      <h2>Neler aktarılsın?</h2>
+      <label class="check"><input type="checkbox" id="secTracks" checked> Beğenilen şarkılar</label>
+      <label class="check"><input type="checkbox" id="secAlbums" checked> Kayıtlı albümler</label>
+      <label class="check"><input type="checkbox" id="secArtists" checked> Takip edilen sanatçılar</label>
+      <label class="check"><input type="checkbox" id="secPlaylists" checked> Çalma listeleri</label>
+      <div id="plBox">
+        <div class="row"><h3>Çalma listeleri</h3><span id="plCount" class="muted"></span></div>
+        <div class="quick">
+          <button data-sel="own">Benimkiler</button><button data-sel="all">Hepsi</button><button data-sel="none">Hiçbiri</button>
+        </div>
+        <div id="plList" class="list"><p class="muted" style="padding:10px 0">Yükleniyor…</p></div>
+        <p class="muted">"Başkasının" işaretli listeler Spotify kuralları gereği okunamayabilir.</p>
+      </div>
+      <button id="exportBtn" class="primary">CSV oluştur</button>
+      <div id="exportResult" hidden>
+        <div class="info" id="exportSummary"></div>
+        <div class="actions"><button id="dlBtn" class="primary">CSV'yi indir</button><button id="shareBtn" hidden>Paylaş</button></div>
+      </div>
+    </div>
+
+    <div id="tab-import" class="card" hidden>
+      <h2>CSV'den yeni liste</h2>
+      <label class="file" id="fileLabel">CSV dosyası seç<input type="file" id="fileIn" accept=".csv,text/csv,text/plain"></label>
+      <div id="fileInfo" class="info" hidden></div>
+      <label class="field" for="plName">Yeni listenin adı</label>
+      <input type="text" id="plName" value="Tüm Şarkılar (Birleşik)">
+      <label class="check"><input type="checkbox" id="plPublic"> Herkese açık olsun</label>
+      <button id="importBtn" class="primary" disabled>Spotify'a yükle</button>
+      <div id="importResult" class="info" hidden></div>
+    </div>
+
+    <div id="prog" class="progress" hidden><div id="progBar"></div></div>
+    <pre id="log"></pre>
+  </section>
+
+  <footer>İşlem sırasında ekranı açık tut. Veriler yalnızca bu cihazda işlenir; hiçbir sunucuya gönderilmez.</footer>
+</div>
+
+<script>
+"use strict";
+// ---- Ayarlar ---------------------------------------------------------------
+// Spotify geliştirici uygulamasının Client ID'si (gizli değildir). Redirect URI olarak
+// bu sayfanın adresi birebir uygulamaya eklenmiş olmalı.
+const CLIENT_ID = "1507592cdacc43fc98f94f3114e913f7";
+const API = "https://api.spotify.com/v1";
+const AUTH = "https://accounts.spotify.com/authorize";
+const TOKEN = "https://accounts.spotify.com/api/token";
+const SCOPE = "user-library-read user-follow-read playlist-read-private playlist-read-collaborative playlist-modify-private playlist-modify-public";
+const HEADER = ["Track name", "Artist name", "Album", "Playlist name", "Type", "ISRC", "Spotify - id"];
+const TRACK_TYPES = ["Favorite", "Playlist"];
+const CHUNK = 100;
+const REDIRECT = location.origin + location.pathname.replace(/index\.html$/, "");
+
+// ---- Yardımcılar -------------------------------------------------------------
+const $ = s => document.querySelector(s);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const store = {
+  get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+  del(k) { try { localStorage.removeItem(k); } catch {} }
+};
+function b64url(buf) {
+  let s = ""; for (const x of new Uint8Array(buf)) s += String.fromCharCode(x);
+  return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+function rand(n) { const a = new Uint8Array(n); crypto.getRandomValues(a); return b64url(a); }
+function log(msg) { const el = $("#log"); el.textContent += msg + "\n"; el.scrollTop = el.scrollHeight; }
+function showError(msg) { const e = $("#err"); e.textContent = msg; e.hidden = !msg; if (msg) e.scrollIntoView({behavior: "smooth"}); }
+function progress(done, total) {
+  $("#prog").hidden = total == null;
+  if (total) $("#progBar").style.width = Math.min(100, done / total * 100).toFixed(1) + "%";
+}
+function esc(s) { return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+const fmt = n => n.toLocaleString("tr-TR");
+
+class ApiError extends Error { constructor(code, msg) { super(msg); this.code = code; } }
+class AuthError extends Error { constructor() { super("Oturum süresi doldu, lütfen tekrar giriş yap."); } }
+
+// Ekranın kararmasını engelle (destekleyen tarayıcılarda)
+let wakeLock = null;
+async function keepAwake(on) {
+  try {
+    if (on && "wakeLock" in navigator) wakeLock = await navigator.wakeLock.request("screen");
+    else if (!on && wakeLock) { await wakeLock.release(); wakeLock = null; }
+  } catch {}
+}
+
+// ---- Giriş (PKCE, Client Secret yok) ------------------------------------------
+async function startLogin() {
+  const verifier = rand(64);
+  const challenge = b64url(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier)));
+  const state = rand(16);
+  store.set("pkce", {verifier, state});
+  location.href = AUTH + "?" + new URLSearchParams({
+    client_id: CLIENT_ID, response_type: "code", redirect_uri: REDIRECT, scope: SCOPE,
+    state, code_challenge_method: "S256", code_challenge: challenge});
+}
+
+async function tokenRequest(params) {
+  const r = await fetch(TOKEN, {method: "POST", headers: {"Content-Type": "application/x-www-form-urlencoded"},
+    body: new URLSearchParams({client_id: CLIENT_ID, ...params})});
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error("Giriş hatası: " + (j.error_description || j.error || "HTTP " + r.status));
+  const old = store.get("tok") || {};
+  store.set("tok", {access: j.access_token, refresh: j.refresh_token || old.refresh, exp: Date.now() + ((j.expires_in || 3600) - 60) * 1000});
+}
+
+async function handleRedirect() {
+  const p = new URLSearchParams(location.search);
+  if (!p.has("code") && !p.has("error")) return;
+  history.replaceState(null, "", REDIRECT);
+  const saved = store.get("pkce"); store.del("pkce");
+  if (p.get("error")) throw new Error("Spotify girişi tamamlanmadı: " + p.get("error"));
+  if (!saved || saved.state !== p.get("state")) throw new Error("Giriş doğrulanamadı. Aynı tarayıcıda tekrar dene.");
+  await tokenRequest({grant_type: "authorization_code", code: p.get("code"), redirect_uri: REDIRECT, code_verifier: saved.verifier});
+}
+
+async function accessToken(force) {
+  const t = store.get("tok");
+  if (!t) throw new AuthError();
+  if (!force && Date.now() < t.exp) return t.access;
+  if (!t.refresh) { store.del("tok"); throw new AuthError(); }
+  try { await tokenRequest({grant_type: "refresh_token", refresh_token: t.refresh}); }
+  catch { store.del("tok"); throw new AuthError(); }
+  return store.get("tok").access;
+}
+
+// ---- API çağrısı: 429'da bekler, 5xx'te tekrar dener ----------------------------
+async function api(method, url, body) {
+  if (!url.startsWith("http")) url = API + url;
+  let tries = 0, waits = 0, refreshed = false;
+  while (true) {
+    const tok = await accessToken(false);
+    let r;
+    try {
+      r = await fetch(url, {method, headers: {Authorization: "Bearer " + tok, ...(body ? {"Content-Type": "application/json"} : {})},
+        body: body ? JSON.stringify(body) : undefined});
+    } catch (e) {
+      if (++tries >= 6) throw new ApiError(0, "Ağ hatası: internet bağlantını kontrol et.");
+      await sleep(2000 * tries); continue;
+    }
+    if (r.status === 429 && waits < 30) {
+      waits++;
+      const w = (parseInt(r.headers.get("Retry-After"), 10) || 5) + 1;
+      log(`  Hız sınırı, ${w} sn bekleniyor...`);
+      await sleep(w * 1000); continue;
+    }
+    if (r.status === 401 && !refreshed) { refreshed = true; await accessToken(true); continue; }
+    if (r.status >= 500 && ++tries < 6) { await sleep(2000 * tries); continue; }
+    const text = await r.text();
+    if (!r.ok) throw new ApiError(r.status, `HTTP ${r.status} ${method} ${url.replace(API, "")}\n${text.slice(0, 300)}`);
+    return text ? JSON.parse(text) : {};
+  }
+}
+
+async function* pages(url, key) {
+  while (url) {
+    const resp = await api("GET", url);
+    const block = key ? (resp[key] || {}) : resp;
+    for (const it of block.items || []) yield it;
+    url = block.next;
+  }
+}
+
+// ---- CSV ---------------------------------------------------------------------
+function trackRow(tr, playlistName, typ) {
+  const artist = ((tr.artists || [{}])[0] || {}).name || "";
+  return [tr.name || "", artist, (tr.album || {}).name || "", playlistName, typ, (tr.external_ids || {}).isrc || "", tr.id || ""];
+}
+function toCSV(rows) {
+  const q = v => '"' + String(v ?? "").replace(/"/g, '""') + '"';
+  return [HEADER, ...rows].map(r => r.map(q).join(",") + "\r\n").join("");
+}
+function parseCSV(text) {
+  text = text.replace(/^\uFEFF/, "");
+  const firstLine = text.slice(0, text.indexOf("\n") >>> 0);
+  const sep = !firstLine.includes(",") && firstLine.includes(";") ? ";" : ",";
+  const rows = []; let row = [], f = "", inQ = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inQ) {
+      if (c === '"') { if (text[i + 1] === '"') { f += '"'; i++; } else inQ = false; }
+      else f += c;
+    } else if (c === '"') inQ = true;
+    else if (c === sep) { row.push(f); f = ""; }
+    else if (c === "\n" || c === "\r") {
+      if (c === "\r" && text[i + 1] === "\n") i++;
+      row.push(f); f = ""; if (row.some(x => x !== "")) rows.push(row); row = [];
+    } else f += c;
+  }
+  row.push(f); if (row.some(x => x !== "")) rows.push(row);
+  return rows;
+}
+function hash(s) { let h = 5381; for (let i = 0; i < s.length; i++) h = (h * 33 ^ s.charCodeAt(i)) >>> 0; return h.toString(36); }
+
+// ---- Arayüz --------------------------------------------------------------------
+let me = null, playlists = [], exportBlob = null, exportName = "", importIds = [], importKey = "", busy = false;
+
+function setBusy(b) {
+  busy = b;
+  document.querySelectorAll("#appView button, #appView input").forEach(el => {
+    if (el.id === "importBtn") el.disabled = b || !importIds.length; else el.disabled = b;
+  });
+  keepAwake(b);
+}
+
+function switchTab(name) {
+  document.querySelectorAll(".tabs button").forEach(b => b.classList.toggle("active", b.dataset.tab === name));
+  $("#tab-export").hidden = name !== "export";
+  $("#tab-import").hidden = name !== "import";
+}
+
+async function loadPlaylists() {
+  const box = $("#plList");
+  box.innerHTML = '<p class="muted" style="padding:10px 0">Yükleniyor…</p>';
+  playlists = [];
+  for await (const p of pages("/me/playlists?limit=50")) if (p && p.id) playlists.push(p);
+  box.innerHTML = playlists.map((p, i) => {
+    const owned = (p.owner || {}).id === me.id || p.collaborative;
+    const total = ((p.items || p.tracks) || {}).total;
+    p._owned = owned;
+    return `<label class="check"><input type="checkbox" data-i="${i}" ${owned ? "checked" : ""}>
+      <span class="name">${esc(p.name || "(adsız)")}${owned ? "" : '<span class="tag">başkasının</span>'}</span>
+      <span class="meta">${total != null ? fmt(total) : ""}</span></label>`;
+  }).join("") || '<p class="muted" style="padding:10px 0">Çalma listesi yok.</p>';
+  $("#plCount").textContent = playlists.length + " liste";
+}
+
+async function runExport() {
+  showError(""); $("#log").textContent = ""; $("#exportResult").hidden = true;
+  const want = id => $(id).checked;
+  const selected = want("#secPlaylists")
+    ? [...document.querySelectorAll("#plList input:checked")].map(x => playlists[+x.dataset.i]) : [];
+  if (!want("#secTracks") && !want("#secAlbums") && !want("#secArtists") && !selected.length) {
+    showError("En az bir şey seçmelisin."); return;
+  }
+  setBusy(true);
+  const rows = [], skippedPl = []; let skippedItems = 0;
+  try {
+    if (want("#secTracks")) {
+      log("Beğenilen şarkılar okunuyor...");
+      let n = 0;
+      for await (const it of pages("/me/tracks?limit=50")) {
+        const tr = it.track || it.item;
+        if (tr && tr.id && !tr.is_local) { rows.push(trackRow(tr, "Favorite Songs", "Favorite")); n++; }
+        if (n % 500 === 0 && n) log(`  ${fmt(n)}...`);
+      }
+      log(`  ${fmt(n)} şarkı`);
+    }
+    if (want("#secAlbums")) {
+      log("Kayıtlı albümler okunuyor...");
+      let n = 0;
+      for await (const it of pages("/me/albums?limit=50")) {
+        const al = it.album || it;
+        if (al.id) {
+          const artist = ((al.artists || [{}])[0] || {}).name || "";
+          rows.push([al.name || "", artist, al.name || "", "Favorite Albums", "Album", (al.external_ids || {}).upc || "", al.id]); n++;
+        }
+      }
+      log(`  ${fmt(n)} albüm`);
+    }
+    if (want("#secArtists")) {
+      log("Takip edilen sanatçılar okunuyor...");
+      let n = 0;
+      for await (const ar of pages("/me/following?type=artist&limit=50", "artists")) {
+        if (ar.id) { rows.push([ar.name || "", "", "", "Favorite Artists", "Artist", "", ar.id]); n++; }
+      }
+      log(`  ${fmt(n)} sanatçı`);
+    }
+    if (selected.length) {
+      log("Seçilen çalma listeleri okunuyor...");
+      for (let k = 0; k < selected.length; k++) {
+        const p = selected[k]; const name = p.name || ""; let count = 0;
+        progress(k, selected.length);
+        try {
+          for await (const it of pages(`/playlists/${p.id}/items?limit=50`)) {
+            const tr = it.item || it.track;
+            if (!tr || !tr.id || tr.is_local || tr.type === "episode") { skippedItems++; continue; }
+            rows.push(trackRow(tr, name, "Playlist")); count++;
+          }
+          log(`  [${k + 1}/${selected.length}] ${name}: ${fmt(count)}`);
+        } catch (e) {
+          if (e instanceof AuthError) throw e;
+          log(`  ! '${name}' okunamadı (HTTP ${e.code}), atlandı.`);
+          skippedPl.push(name);
+        }
+      }
+      progress(1, 1);
+    }
+    const d = new Date();
+    exportName = `My_Spotify_Library_${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}.csv`;
+    exportBlob = new Blob(["\uFEFF" + toCSV(rows)], {type: "text/csv;charset=utf-8"});
+    let summary = `<b>${fmt(rows.length)} satır hazır.</b> Dosya: ${esc(exportName)}`;
+    if (skippedItems) summary += `<br>Atlanan öğe (yerel dosya / podcast / kaldırılmış): ${fmt(skippedItems)}`;
+    if (skippedPl.length) summary += `<br>Okunamayan ${skippedPl.length} liste: ${skippedPl.map(esc).join(", ")}`;
+    $("#exportSummary").innerHTML = summary;
+    $("#shareBtn").hidden = !(navigator.canShare && navigator.canShare({files: [new File([exportBlob], exportName, {type: "text/csv"})]}));
+    $("#exportResult").hidden = false;
+    log("Bitti.");
+  } catch (e) {
+    handleFatal(e);
+  } finally {
+    setBusy(false); progress(null, null);
+  }
+}
+
+function downloadExport() {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(exportBlob); a.download = exportName;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 60000);
+}
+async function shareExport() {
+  try { await navigator.share({files: [new File([exportBlob], exportName, {type: "text/csv"})], title: exportName}); }
+  catch (e) { if (e.name !== "AbortError") downloadExport(); }
+}
+
+async function readImportFile(file) {
+  showError(""); importIds = []; $("#importResult").hidden = true;
+  const info = $("#fileInfo");
+  try {
+    const rows = parseCSV(await file.text());
+    if (rows.length < 2) throw new Error("Dosya boş görünüyor.");
+    const head = rows[0].map(h => h.trim());
+    const idCol = head.indexOf("Spotify - id"), typeCol = head.indexOf("Type");
+    if (idCol < 0) throw new Error("CSV'de 'Spotify - id' sütunu bulunamadı.");
+    const seen = new Set(); let skipped = 0;
+    for (const r of rows.slice(1)) {
+      if (typeCol >= 0 && !TRACK_TYPES.includes((r[typeCol] || "").trim())) { skipped++; continue; }
+      const id = (r[idCol] || "").trim();
+      if (id.length === 22 && !seen.has(id)) { seen.add(id); importIds.push(id); }
+    }
+    importKey = "import:" + hash(importIds.join(","));
+    let html = `<b>${esc(file.name)}</b><br>CSV satırı: ${fmt(rows.length - 1)} · benzersiz şarkı: <b>${fmt(importIds.length)}</b>`;
+    if (skipped) html += `<br>Atlanacak albüm/sanatçı satırı: ${fmt(skipped)}`;
+    const st = store.get(importKey);
+    if (st && st.added < importIds.length) html += `<br>Bu dosyanın yarım kalmış yüklemesi var (${fmt(st.added)}/${fmt(importIds.length)}). Devam edebilirsin.`;
+    info.innerHTML = html; info.hidden = false;
+    $("#fileLabel").firstChild.textContent = "Başka dosya seç";
+    if (!importIds.length) throw new Error("Dosyada yüklenecek geçerli şarkı id'si yok.");
+  } catch (e) {
+    showError(e.message);
+  }
+  $("#importBtn").disabled = !importIds.length;
+}
+
+async function runImport() {
+  showError(""); $("#log").textContent = ""; $("#importResult").hidden = true;
+  let st = store.get(importKey);
+  if (st && st.added < importIds.length) {
+    if (!confirm(`Bu dosyanın yarım kalmış yüklemesi var (${st.added}/${importIds.length}).\n\nTamam: kaldığı yerden devam et\nİptal: yeni liste oluştur`)) st = null;
+  } else if (st && st.added >= importIds.length) {
+    if (!confirm("Bu dosya daha önce tamamen yüklenmiş. Yeni bir liste daha oluşturulsun mu?")) return;
+    st = null;
+  }
+  setBusy(true);
+  try {
+    if (!st) {
+      const name = $("#plName").value.trim() || "Tüm Şarkılar (Birleşik)";
+      const pl = await api("POST", "/me/playlists", {name, public: $("#plPublic").checked,
+        description: `${importIds.length} şarkı, CSV'den aktarıldı`});
+      st = {playlist_id: pl.id, added: 0, url: (pl.external_urls || {}).spotify || "", name};
+      store.set(importKey, st);
+      log(`Liste oluşturuldu: ${name}`);
+    } else log(`Devam ediliyor: ${st.added}/${importIds.length}`);
+    progress(st.added, importIds.length);
+    while (st.added < importIds.length) {
+      const batch = importIds.slice(st.added, st.added + CHUNK);
+      await api("POST", `/playlists/${st.playlist_id}/items`, {uris: batch.map(i => "spotify:track:" + i)});
+      st.added += batch.length; store.set(importKey, st);
+      progress(st.added, importIds.length);
+      log(`  ${fmt(st.added)}/${fmt(importIds.length)}`);
+      await sleep(300);
+    }
+    log("Bitti.");
+    const r = $("#importResult");
+    r.innerHTML = `<b>${fmt(importIds.length)} şarkı eklendi.</b>` + (st.url ? `<br><a href="${esc(st.url)}" target="_blank" rel="noopener">Listeyi Spotify'da aç</a>` : "");
+    r.hidden = false;
+  } catch (e) {
+    handleFatal(e);
+    if (st && st.added < importIds.length) log("Yarıda kaldı. Aynı dosyayı tekrar seçip yükle: kaldığı yerden devam eder.");
+  } finally {
+    setBusy(false);
+  }
+}
+
+function handleFatal(e) {
+  if (e instanceof AuthError) { showError(e.message); showLogin(); return; }
+  let msg = e.message || String(e);
+  if (e.code === 403) msg += "\n\nSpotify erişimi reddetti. Hesabının uygulamanın kullanıcı listesinde olduğundan emin ol.";
+  showError(msg); log("Hata: " + msg.split("\n")[0]);
+}
+
+function showLogin() { $("#loginView").hidden = false; $("#appView").hidden = true; }
+
+async function showApp() {
+  me = await api("GET", "/me");
+  $("#userName").textContent = me.display_name || me.id;
+  $("#loginView").hidden = true; $("#appView").hidden = false;
+  try { await loadPlaylists(); } catch (e) { handleFatal(e); }
+}
+
+// ---- Olaylar -----------------------------------------------------------------
+$("#loginBtn").onclick = () => startLogin().catch(e => showError(e.message));
+$("#logoutBtn").onclick = () => { store.del("tok"); location.reload(); };
+document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => !busy && switchTab(b.dataset.tab));
+$("#secPlaylists").onchange = e => $("#plBox").hidden = !e.target.checked;
+document.querySelectorAll(".quick button").forEach(b => b.onclick = () => {
+  document.querySelectorAll("#plList input").forEach(x => {
+    const p = playlists[+x.dataset.i];
+    x.checked = b.dataset.sel === "all" || (b.dataset.sel === "own" && p._owned);
+  });
+});
+$("#exportBtn").onclick = runExport;
+$("#dlBtn").onclick = downloadExport;
+$("#shareBtn").onclick = shareExport;
+$("#fileIn").onchange = e => { if (e.target.files[0]) readImportFile(e.target.files[0]); e.target.value = ""; };
+$("#importBtn").onclick = runImport;
+
+(async () => {
+  try {
+    await handleRedirect();
+    if (store.get("tok")) await showApp(); else showLogin();
+  } catch (e) {
+    showLogin(); showError(e.message || String(e));
+  }
+})();
+</script>
+</body>
+</html>
